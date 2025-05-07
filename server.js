@@ -1,36 +1,33 @@
-// server.js - Backend para o sistema AC MINES HACK
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const crypto = require('crypto');
 const axios = require('axios');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middlewares
+app.use(cors()); // CORS universal, sem definir origem
 app.use(express.json());
-app.use(cors({
-  origin: 'https://acmineshackmoz.netlify.app/', // Substituir pelo domínio real do frontend
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuração do banco de dados SQLite
+// Initialize SQLite database
 let db;
 
-// Inicialização do banco de dados
 async function initializeDatabase() {
   db = await open({
     filename: './keys.db',
     driver: sqlite3.Database
   });
 
-  // Criar tabela de chaves se não existir
+  // Create keys table if it doesn't exist
   await db.exec(`
     CREATE TABLE IF NOT EXISTS keys (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      key TEXT UNIQUE,
+      id INTEGER PRIMARY KEY,
+      key TEXT,
       plan TEXT,
       createdAt TEXT,
       expiresAt TEXT,
@@ -38,7 +35,7 @@ async function initializeDatabase() {
     )
   `);
 
-  // Verificar e adicionar chave admin se não existir
+  // Create admin key if it doesn't exist
   const adminKey = await db.get("SELECT * FROM keys WHERE key = 'admin'");
   if (!adminKey) {
     const createdAt = new Date().toISOString();
@@ -47,362 +44,242 @@ async function initializeDatabase() {
       "INSERT INTO keys (key, plan, createdAt, expiresAt, status) VALUES (?, ?, ?, ?, ?)",
       ['admin', 'admin', createdAt, expiresAt, 'active']
     );
-    console.log('Chave admin criada com sucesso!');
+    console.log('Admin key created successfully');
   }
 }
 
-// Função para gerar uma chave aleatória
-function generateRandomKey(length = 16) {
-  return crypto.randomBytes(length).toString('hex');
+// Generate a unique key
+function generateUniqueKey() {
+  return crypto.randomBytes(8).toString('hex');
 }
 
-// Função para calcular a data de expiração com base no plano
+// Calculate expiration date based on plan
 function calculateExpirationDate(plan) {
-  const now = new Date();
+  const today = new Date();
+  let expirationDate = new Date(today);
+  
   switch (plan) {
-    case '7':
-      now.setDate(now.getDate() + 7);
+    case '7dias':
+      expirationDate.setDate(today.getDate() + 7);
       break;
-    case '15':
-      now.setDate(now.getDate() + 15);
+    case '15dias':
+      expirationDate.setDate(today.getDate() + 15);
       break;
-    case '30':
-      now.setDate(now.getDate() + 30);
+    case '30dias':
+      expirationDate.setDate(today.getDate() + 30);
       break;
     default:
-      throw new Error('Plano inválido');
+      expirationDate.setDate(today.getDate() + 1); // Default 1 day
   }
-  return now.toISOString();
-}
-
-// Função para verificar se o valor do plano está correto
-function validatePlanAmount(plan, amount) {
-  const planPrices = {
-    '7': 300,
-    '15': 700,
-    '30': 1200
-  };
   
-  return planPrices[plan] === parseInt(amount, 10);
+  return expirationDate.toISOString();
 }
 
-// Endpoint para autenticação de chave
+// Verify if key is valid
 app.post('/auth', async (req, res) => {
   try {
     const { key } = req.body;
     
     if (!key) {
-      return res.status(400).json({ success: false, message: 'Chave não fornecida' });
+      return res.status(400).json({ success: false, message: 'Key is required' });
     }
     
-    const keyData = await db.get("SELECT * FROM keys WHERE key = ?", [key]);
+    const keyRecord = await db.get(
+      "SELECT * FROM keys WHERE key = ? AND status = 'active' AND datetime(expiresAt) > datetime('now')",
+      [key]
+    );
     
-    if (!keyData) {
-      return res.status(404).json({ success: false, message: 'Chave não encontrada' });
+    if (!keyRecord) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired key' });
     }
     
-    const now = new Date();
-    const expiresAt = new Date(keyData.expiresAt);
-    
-    if (now > expiresAt) {
-      await db.run("UPDATE keys SET status = 'expired' WHERE key = ?", [key]);
-      return res.status(401).json({ success: false, message: 'Chave expirada' });
-    }
-    
-    if (keyData.status !== 'active') {
-      return res.status(401).json({ success: false, message: 'Chave inativa' });
-    }
-    
-    // Cálculo do tempo restante em segundos
-    const remainingTime = Math.floor((expiresAt - now) / 1000);
-    
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: 'Autenticação bem-sucedida',
-      data: {
-        key: keyData.key,
-        plan: keyData.plan,
-        expiresAt: keyData.expiresAt,
-        remainingTime
-      }
+      plan: keyRecord.plan,
+      expiresAt: keyRecord.expiresAt
     });
   } catch (error) {
-    console.error('Erro na autenticação:', error);
-    return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    console.error('Auth error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Endpoint para gerar uma nova chave após pagamento
-app.post('/generateKey', async (req, res) => {
+// Process payment and generate key
+app.post('/payment', async (req, res) => {
   try {
-    const { plan, paymentId } = req.body;
+    const { paymentMethod, numero, quem_comprou, plan } = req.body;
     
-    if (!plan || !['7', '15', '30'].includes(plan)) {
-      return res.status(400).json({ success: false, message: 'Plano inválido' });
+    if (!paymentMethod || !numero || !quem_comprou || !plan) {
+      return res.status(400).json({ success: false, message: 'Missing required payment information' });
     }
     
-    if (!paymentId) {
-      return res.status(400).json({ success: false, message: 'ID de pagamento não fornecido' });
+    // Determine price based on plan
+    let valor;
+    switch (plan) {
+      case '7dias':
+        valor = '300';
+        break;
+      case '15dias':
+        valor = '700';
+        break;
+      case '30dias':
+        valor = '1200';
+        break;
+      default:
+        return res.status(400).json({ success: false, message: 'Invalid plan' });
     }
     
-    // Verificar se o pagamento existe e está confirmado
-    // Na implementação real, você deve verificar o status do pagamento no banco de dados
-    // ou fazer uma chamada para o serviço de pagamento para verificar
-
-    // Gerar uma nova chave
-    const newKey = generateRandomKey();
+    // Prepare payment data
+    const paymentData = {
+      carteira: "1746519798335x143095610732969980",
+      numero: numero,
+      quem_comprou: quem_comprou,
+      valor: valor
+    };
+    
+    // Select API endpoint based on payment method
+    const apiEndpoint = paymentMethod === 'emola' 
+      ? 'https://mozpayment.co.mz/api/1.1/wf/pagamentorotativoemola'
+      : 'https://mozpayment.co.mz/api/1.1/wf/pagamentorotativompesa';
+    
+    // Make payment request
+    const response = await axios.post(apiEndpoint, paymentData);
+    
+    // Check payment success
+    let paymentSuccess = false;
+    if (paymentMethod === 'emola' && response.data && response.data.success === 'yes') {
+      paymentSuccess = true;
+    } else if (paymentMethod === 'mpesa' && response.status === 200) {
+      paymentSuccess = true;
+    }
+    
+    if (!paymentSuccess) {
+      return res.status(400).json({ success: false, message: 'Payment failed' });
+    }
+    
+    // Generate key after successful payment
+    const newKey = generateUniqueKey();
     const createdAt = new Date().toISOString();
     const expiresAt = calculateExpirationDate(plan);
     
-    // Salvar a nova chave no banco de dados
+    // Save key to database
     await db.run(
       "INSERT INTO keys (key, plan, createdAt, expiresAt, status) VALUES (?, ?, ?, ?, ?)",
       [newKey, plan, createdAt, expiresAt, 'active']
     );
     
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: 'Chave gerada com sucesso',
-      data: {
-        key: newKey,
-        plan,
-        createdAt,
-        expiresAt
-      }
+      key: newKey,
+      plan: plan,
+      expiresAt: expiresAt
     });
   } catch (error) {
-    console.error('Erro ao gerar chave:', error);
-    return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    console.error('Payment error:', error);
+    res.status(500).json({ success: false, message: 'Payment processing error' });
   }
 });
 
-// Endpoint para processar pagamentos via MPesa
-app.post('/payment/mpesa', async (req, res) => {
+// Generate key endpoint for admin use
+app.post('/generateKey', async (req, res) => {
   try {
-    const { numero, quem_comprou, plan } = req.body;
+    const { adminKey, plan } = req.body;
     
-    if (!numero || !quem_comprou || !plan) {
-      return res.status(400).json({ success: false, message: 'Dados incompletos' });
+    if (!adminKey || adminKey !== 'admin' || !plan) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
     
-    // Verificar se o plano é válido
-    if (!['7', '15', '30'].includes(plan)) {
-      return res.status(400).json({ success: false, message: 'Plano inválido' });
-    }
+    const newKey = generateUniqueKey();
+    const createdAt = new Date().toISOString();
+    const expiresAt = calculateExpirationDate(plan);
     
-    // Determinar o valor com base no plano
-    let valor;
-    switch (plan) {
-      case '7':
-        valor = '300';
-        break;
-      case '15':
-        valor = '700';
-        break;
-      case '30':
-        valor = '1200';
-        break;
-    }
+    await db.run(
+      "INSERT INTO keys (key, plan, createdAt, expiresAt, status) VALUES (?, ?, ?, ?, ?)",
+      [newKey, plan, createdAt, expiresAt, 'active']
+    );
     
-    // Chamada real para a API de pagamento MPesa
-    const response = await axios.post('https://mozpayment.co.mz/api/1.1/wf/pagamentorotativompesa', {
-      carteira: "1746519798335x143095610732969980",
-      numero,
-      quem_comprou,
-      valor
+    return res.status(200).json({
+      success: true,
+      key: newKey,
+      plan: plan,
+      expiresAt: expiresAt
     });
-    
-    // Verificar a resposta da API
-    if (response.data && response.status === 200) {
-      // Gerar uma nova chave
-      const newKey = generateRandomKey();
-      const createdAt = new Date().toISOString();
-      const expiresAt = calculateExpirationDate(plan);
-      
-      // Salvar a nova chave e os dados do pagamento no banco de dados
-      const paymentId = response.data.paymentId || crypto.randomBytes(8).toString('hex');
-      
-      await db.run(
-        "INSERT INTO keys (key, plan, createdAt, expiresAt, status) VALUES (?, ?, ?, ?, ?)",
-        [newKey, plan, createdAt, expiresAt, 'active']
-      );
-      
-      // Ideal: Salvar também os dados do pagamento em outra tabela
-      
-      return res.json({
-        success: true,
-        message: 'Pagamento processado com sucesso',
-        data: {
-          key: newKey,
-          plan,
-          expiresAt,
-          paymentId
-        }
-      });
-    } else {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falha no processamento do pagamento',
-        error: response.data
-      });
-    }
   } catch (error) {
-    console.error('Erro no processamento do pagamento MPesa:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
+    console.error('Generate key error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Endpoint para processar pagamentos via eMola
-app.post('/payment/emola', async (req, res) => {
-  try {
-    const { numero, quem_comprou, plan } = req.body;
-    
-    if (!numero || !quem_comprou || !plan) {
-      return res.status(400).json({ success: false, message: 'Dados incompletos' });
-    }
-    
-    // Verificar se o plano é válido
-    if (!['7', '15', '30'].includes(plan)) {
-      return res.status(400).json({ success: false, message: 'Plano inválido' });
-    }
-    
-    // Determinar o valor com base no plano
-    let valor;
-    switch (plan) {
-      case '7':
-        valor = '300';
-        break;
-      case '15':
-        valor = '700';
-        break;
-      case '30':
-        valor = '1200';
-        break;
-    }
-    
-    // Chamada real para a API de pagamento eMola
-    const response = await axios.post('https://mozpayment.co.mz/api/1.1/wf/pagamentorotativoemola', {
-      carteira: "1746519798335x143095610732969980",
-      numero,
-      quem_comprou,
-      valor
-    });
-    
-    // Verificar a resposta da API
-    if (response.data && response.data.success === "yes") {
-      // Gerar uma nova chave
-      const newKey = generateRandomKey();
-      const createdAt = new Date().toISOString();
-      const expiresAt = calculateExpirationDate(plan);
-      
-      // Salvar a nova chave e os dados do pagamento no banco de dados
-      const paymentId = response.data.paymentId || crypto.randomBytes(8).toString('hex');
-      
-      await db.run(
-        "INSERT INTO keys (key, plan, createdAt, expiresAt, status) VALUES (?, ?, ?, ?, ?)",
-        [newKey, plan, createdAt, expiresAt, 'active']
-      );
-      
-      // Ideal: Salvar também os dados do pagamento em outra tabela
-      
-      return res.json({
-        success: true,
-        message: 'Pagamento processado com sucesso',
-        data: {
-          key: newKey,
-          plan,
-          expiresAt,
-          paymentId
-        }
-      });
-    } else {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falha no processamento do pagamento',
-        error: response.data
-      });
-    }
-  } catch (error) {
-    console.error('Erro no processamento do pagamento eMola:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
-});
-
-// Endpoint para gerar um sinal (após autenticação)
-app.post('/generateSignal', async (req, res) => {
+// Get game signals endpoint - this will be used to generate the mine pattern
+app.post('/getSignal', async (req, res) => {
   try {
     const { key } = req.body;
     
     if (!key) {
-      return res.status(400).json({ success: false, message: 'Chave não fornecida' });
+      return res.status(400).json({ success: false, message: 'Key is required' });
     }
     
-    // Verificar se a chave existe e está ativa
-    const keyData = await db.get("SELECT * FROM keys WHERE key = ? AND status = 'active'", [key]);
+    const keyRecord = await db.get(
+      "SELECT * FROM keys WHERE key = ? AND status = 'active' AND datetime(expiresAt) > datetime('now')",
+      [key]
+    );
     
-    if (!keyData) {
-      return res.status(404).json({ success: false, message: 'Chave inválida ou expirada' });
+    if (!keyRecord) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired key' });
     }
     
-    const now = new Date();
-    const expiresAt = new Date(keyData.expiresAt);
+    // Generate a random 5x5 grid with safe (1), medium (2), and risky (3) cells
+    const grid = Array(5).fill().map(() => Array(5).fill(0));
     
-    if (now > expiresAt) {
-      await db.run("UPDATE keys SET status = 'expired' WHERE key = ?", [key]);
-      return res.status(401).json({ success: false, message: 'Chave expirada' });
+    // Generate at least 10 safe spots
+    let safeCount = 0;
+    while (safeCount < 10) {
+      const x = Math.floor(Math.random() * 5);
+      const y = Math.floor(Math.random() * 5);
+      if (grid[x][y] === 0) {
+        grid[x][y] = 1; // Safe
+        safeCount++;
+      }
     }
     
-    // Gerar um sinal aleatório para o tabuleiro 5x5
-    const board = [];
+    // Generate some medium risk spots
+    let mediumCount = 0;
+    while (mediumCount < 8) {
+      const x = Math.floor(Math.random() * 5);
+      const y = Math.floor(Math.random() * 5);
+      if (grid[x][y] === 0) {
+        grid[x][y] = 2; // Medium
+        mediumCount++;
+      }
+    }
+    
+    // Fill remaining with risky spots
     for (let i = 0; i < 5; i++) {
-      const row = [];
       for (let j = 0; j < 5; j++) {
-        // Gerar probabilidade aleatória (0-100%)
-        const probability = Math.floor(Math.random() * 101);
-        
-        // Determinar se é seguro ou arriscado
-        const isSafe = probability > 50;
-        
-        row.push({
-          x: j,
-          y: i,
-          probability,
-          isSafe
-        });
+        if (grid[i][j] === 0) {
+          grid[i][j] = 3; // Risky
+        }
       }
-      board.push(row);
     }
     
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: 'Sinal gerado com sucesso',
-      data: {
-        board,
-        timestamp: new Date().toISOString()
-      }
+      grid: grid,
+      expiresAt: new Date(Date.now() + 2 * 60 * 1000).toISOString() // Signal expires in 2 minutes
     });
   } catch (error) {
-    console.error('Erro ao gerar sinal:', error);
-    return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    console.error('Get signal error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Inicializar o banco de dados e iniciar o servidor
+// Initialize database and start server
 initializeDatabase()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch(err => {
-    console.error('Erro ao inicializar o banco de dados:', err);
-    process.exit(1);
+    console.error('Database initialization error:', err);
   });
