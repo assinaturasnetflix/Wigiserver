@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caçador de Rosas V1 - Estratégia Aviator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Link para Font Awesome (para ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Estilos específicos da página pública */
+        .public-page {
+            max-width: 800px; /* Largura máxima para melhor leitura */
+            margin: 0 auto;
+            padding: 0 15px 50px 15px; /* Espaçamento inferior */
+            overflow-x: hidden; /* Previne scroll horizontal */
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 30px 0;
+            animation: fadeInDown 0.6s ease-out;
+        }
+        .logo-container img {
+            max-width: 150px; /* Ajuste o tamanho do logo */
+            height: auto;
+        }
+
+        .video-reels-container {
+            display: flex;
+            justify-content: space-around; /* Espaçamento entre vídeos */
+            align-items: center;
+            gap: 10px; /* Espaço entre vídeos */
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 100%; /* Garante que não ultrapasse o container */
+            padding: 10px 0;
+            animation: fadeInUp 0.7s 0.2s ease-out backwards; /* Animação com delay */
+        }
+        .video-reels-container video {
+            width: 30%; /* Ajuste para caber 3 lado a lado */
+            max-width: 150px; /* Tamanho máximo de cada vídeo */
+            height: 280px; /* Altura estilo reels/tiktok */
+            object-fit: cover; /* Cobre o espaço sem distorcer */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(255, 0, 85, 0.1);
+            border: 1px solid #333; /* Borda sutil */
+             opacity: 0.9; /* Leve transparência */
+             transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+         .video-reels-container video:hover {
+             transform: scale(1.03);
+             opacity: 1;
+         }
+
+        .cta-button {
+            display: inline-block; /* Para poder centralizar com text-align */
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 15px 40px; /* Mais padding horizontal */
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            border-radius: 50px; /* Botão arredondado */
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            margin: 20px 0; /* Espaçamento vertical */
+            box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3);
+            animation: pulse 2s infinite;
+        }
+        .cta-button:hover {
+            background-color: #d60047;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 0, 85, 0.5);
+             animation-play-state: paused; /* Pausa a animação no hover */
+        }
+         @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+         }
+
+        .strategy-description {
+            background-color: #111; /* Fundo sutilmente diferente */
+            padding: 30px;
+            border-radius: 12px;
+            margin: 40px 0;
+            color: #e0e0e0;
+            line-height: 1.7;
+            font-size: 1.05rem;
+             border: 1px solid #222;
+            animation: fadeInUp 0.7s 0.4s ease-out backwards;
+        }
+        .strategy-description h2 {
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 15px;
+             text-align: center;
+             font-size: 1.8rem;
+        }
+        .strategy-description p {
+            margin-bottom: 20px;
+        }
+         .strategy-description span { /* Estilo para emojis (opcional) */
+            margin: 0 3px;
+         }
+
+        .icons-section {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 30px;
+            padding: 20px 0;
+             border-top: 1px solid #333;
+             margin-top: 30px;
+        }
+        .icon-item {
+            text-align: center;
+            color: #ff0055;
+             max-width: 100px; /* Limita largura */
+        }
+        .icon-item i {
+            font-size: 2.5rem; /* Tamanho do ícone */
+            margin-bottom: 10px;
+             transition: transform 0.3s ease;
+        }
+         .icon-item:hover i {
+             transform: scale(1.1);
+         }
+        .icon-item span {
+            display: block;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ff0055, transparent);
+            margin: 50px auto; /* Centraliza e adiciona espaço */
+            width: 80%;
+            opacity: 0.5;
+             animation: fadeIn 1s 0.6s ease-out backwards;
+        }
+
+        .testimonials-section, .comments-section {
+            margin: 40px 0;
+            animation: fadeInUp 0.7s 0.8s ease-out backwards;
+        }
+         .testimonials-section h2, .comments-section h2 {
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .testimonial {
+            background-color: #181818;
+            border-left: 4px solid #ff0055;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+             transition: transform 0.3s ease;
+        }
+         .testimonial:hover {
+             transform: translateY(-5px);
+         }
+        .testimonial p {
+            font-style: italic;
+            color: #d0d0d0;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 35px; /* Espaço para as aspas */
+        }
+        .testimonial p::before {
+            content: "\f10d"; /* Ícone de aspas Font Awesome */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #ff0055;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+             opacity: 0.8;
+        }
+        .testimonial span {
+            display: block;
+            text-align: right;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 10px;
+             font-size: 0.95rem;
+        }
+
+        .comment {
+            background-color: #181818;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #282828;
+             display: none; /* Oculto por padrão */
+             opacity: 0;
+             transition: opacity 0.5s ease;
+        }
+         .comment.visible {
+             display: block; /* Mostra os 3 primeiros */
+             opacity: 1;
+         }
+        .comment strong {
+            color: #ff0055;
+            margin-right: 8px;
+        }
+        .comment span {
+            color: #c0c0c0;
+        }
+        #load-more-comments {
+            display: block; /* Ou inline-block se preferir */
+            margin: 20px auto;
+            background-color: transparent;
+            color: #ff0055;
+            border: 1px solid #ff0055;
+            padding: 10px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-weight: 600;
+        }
+        #load-more-comments:hover {
+            background-color: rgba(255, 0, 85, 0.1);
+            color: #ff3377;
+        }
+        #load-more-comments.hidden {
+            display: none; /* Oculta o botão após clicar */
+        }
+
+
+        .final-section {
+            text-align: center;
+            margin-top: 50px;
+            padding: 40px 20px;
+            background-color: #111;
+            border-radius: 12px;
+            border-top: 2px solid #ff0055;
+            animation: fadeInUp 0.7s 1s ease-out backwards;
+        }
+        .final-section h2 {
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 25px;
+        }
+
+        /* Animações de entrada */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .video-reels-container video {
+                width: 31%; /* Ajusta um pouco para telas menores */
+                height: 220px; /* Altura menor */
+            }
+            .cta-button {
+                font-size: 1rem;
+                padding: 12px 30px;
+            }
+            .strategy-description, .final-section {
+                padding: 20px;
+            }
+            .strategy-description h2, .testimonials-section h2, .comments-section h2, .final-section h2 {
+                 font-size: 1.5rem;
+            }
+            .icons-section {
+                flex-wrap: wrap; /* Quebra os ícones se não couberem */
+                 gap: 15px;
+            }
+            .icon-item {
+                 flex-basis: 45%; /* Ocupa quase metade */
+                 max-width: none;
+            }
+        }
+         @media (max-width: 480px) {
+            .video-reels-container {
+                /* Poderia mudar para flex-direction: column ou ajustar width novamente */
+                 justify-content: space-between; /* Garante espaço nas bordas */
+            }
+             .video-reels-container video {
+                width: 30%; /* Mantém 3 lado a lado, mas menores */
+                height: 180px; /* Altura ainda menor */
+                 max-width: 120px;
+            }
+             .testimonial p::before {
+                 font-size: 1.2rem;
+                 left: 5px;
+             }
+             .testimonial p {
+                 padding-left: 25px;
+             }
+             .icon-item i {
+                 font-size: 2rem;
+             }
+        }
+
+    </style>
+</head>
+<body class="public-body">
+
+    <div class="public-page">
+        <header class="logo-container">
+            <!-- Use uma imagem real aqui -->
+            <img src="/img/logo.png" alt="Logo Caçador de Rosas">
+        </header>
+
+        <section class="video-reels-container">
+            <video src="/videos/video1.mp4" autoplay loop muted playsinline></video>
+            <video src="/videos/video2.mp4" autoplay loop muted playsinline></video>
+            <video src="/videos/video3.mp4" autoplay loop muted playsinline></video>
+        </section>
+
+        <div style="text-align: center;">
+             <!-- Botão CTA 1 - Usa o link específico do afiliado -->
+            <a href="<%= affiliate.button1Link %>" target="_blank" class="cta-button">
+                Quero Lucrar com Velas Rosas! <i class="fas fa-rocket" style="margin-left: 8px;"></i>
+            </a>
+        </div>
+
+        <section class="strategy-description">
+            <h2><i class="fas fa-bullseye" style="margin-right: 10px; color: #ff0055;"></i>A Estratégia Caçador de Rosas V1</h2>
+            <p>
+                Caçador de Rosas V1 é a estratégia definitiva para quem quer maximizar lucros no Aviator <span>✈️</span><span>💰</span>. Focada nas velas rosas (10x ou mais) <span>🌹</span><span>🔥</span>, ela ensina a identificar os melhores momentos para apostar e aplicar táticas de risco controlado <span>⚖️</span><span>🎯</span>. Com gestão de banco eficiente <span>📊</span> e horários ideais <span>⏰</span>, essa estratégia vai transformar suas apostas em vitórias consistentes <span>🏆</span>. Domine o Aviator e comece a caçar as melhores velas rosas agora! <span>🚀</span><span>🌹</span>
+            </p>
+            <div class="icons-section">
+                <div class="icon-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Maximização de Lucros</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Risco Controlado</span>
+                </div>
+                 <div class="icon-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>Gestão de Banca</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Horários Ideais</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="testimonials-section">
+             <h2>O Que Dizem Nossos Alunos</h2>
+             <!-- Testemunho 1 -->
+             <div class="testimonial">
+                <p>Finalmente uma estratégia que funciona! As velas rosas não param de aparecer seguindo o método.</p>
+                <span>- João Silva</span>
+             </div>
+             <!-- Testemunho 2 -->
+             <div class="testimonial">
+                <p>A gestão de banca ensinada aqui mudou meu jogo. Consistência é a chave!</p>
+                <span>- Maria Oliveira</span>
+             </div>
+              <!-- Testemunho 3 -->
+             <div class="testimonial">
+                <p>Didática excelente, fácil de entender e aplicar. Já recuperei o investimento e estou lucrando.</p>
+                <span>- Carlos Pereira</span>
+             </div>
+        </section>
+
+         <section class="comments-section">
+             <h2>Comentários Recentes</h2>
+             <div id="comments-list">
+                <!-- Comentários (serão mostrados/ocultados via JS) -->
+                <div class="comment visible"><strong>Ana P.:</strong> <span>Top demais! Funciona mesmo. 🔥</span></div>
+                <div class="comment visible"><strong>Bruno M.:</strong> <span>Valeu cada centavo. Aprendi muito.</span></div>
+                <div class="comment visible"><strong>Carla S.:</strong> <span>Recomendo! Estratégia clara e objetiva. 🚀</span></div>
+                <div class="comment"><strong>Diego F.:</strong> <span>Comecei ontem e já tive resultado!</span></div>
+                <div class="comment"><strong>Eduarda L.:</strong> <span>Melhor investimento que fiz no Aviator.</span></div>
+                <div class="comment"><strong>Felipe G.:</strong> <span>Finalmente consistência! Obrigado! 🙏</span></div>
+                 <div class="comment"><strong>Gabriela T.:</strong> <span>Simplesmente funciona!</span></div>
+                 <!-- Adicione mais comentários se desejar -->
+             </div>
+             <button id="load-more-comments">Ver mais comentários</button>
+         </section>
+
+         <div style="text-align: center; margin: 40px 0;">
+             <!-- Botão CTA 2 - Usa o link específico do afiliado -->
+            <a href="<%= affiliate.button2Link %>" target="_blank" class="cta-button">
+                Acessar Estratégia Agora! <i class="fas fa-check-circle" style="margin-left: 8px;"></i>
+            </a>
+        </div>
+
+
+        <section class="final-section">
+             <h2>Está pronto para começar a caçar as rosas?</h2>
+             <!-- Botão CTA 3 - Usa o link específico do afiliado -->
+            <a href="<%= affiliate.button3Link %>" target="_blank" class="cta-button">
+                Sim! Quero Lucrar no Aviator! <i class="fas fa-fighter-jet" style="margin-left: 8px;"></i>
+            </a>
+        </section>
+
+    </div>
+
+    <script>
+        // Script para o botão "Ver mais comentários"
+        document.addEventListener('DOMContentLoaded', () => {
+            const commentsList = document.getElementById('comments-list');
+            const comments = commentsList.querySelectorAll('.comment');
+            const loadMoreButton = document.getElementById('load-more-comments');
+            const commentsToShowInitially = 3; // Quantos comentários mostrar inicialmente
+
+            // Mostra os primeiros comentários (já feito com a classe 'visible' no HTML/CSS)
+
+            // Verifica se há mais comentários para mostrar
+            if (comments.length <= commentsToShowInitially) {
+                loadMoreButton.style.display = 'none'; // Oculta o botão se não houver mais
+            }
+
+            loadMoreButton.addEventListener('click', () => {
+                // Mostra todos os comentários restantes
+                comments.forEach((comment, index) => {
+                    if (index >= commentsToShowInitially) {
+                        comment.classList.add('visible'); // Adiciona a classe para mostrar com transição
+                    }
+                });
+                loadMoreButton.classList.add('hidden'); // Oculta o botão após clicar
+                 loadMoreButton.style.display = 'none'; // Garante que desapareça
+            });
+        });
+    </script>
+
+</body>
+</html>

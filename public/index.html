@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Afiliado - Mixeiro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Estilos específicos do painel, se necessário */
+        body.panel-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .panel-container {
+            background-color: #1a1a1a; /* Um pouco mais claro que full black para destaque */
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .panel-container h1 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        .panel-container .welcome-message {
+            color: #cccccc;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .input-group input[type="url"],
+        .input-group input[type="text"] { /* Ajuste para text se preferir não validar URL no HTML */
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: #ffffff;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box; /* Garante que padding não aumente o tamanho total */
+        }
+        .input-group input[type="url"]:focus,
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #ff0055;
+            box-shadow: 0 0 0 3px rgba(255, 0, 85, 0.3);
+        }
+        .submit-button {
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .submit-button:hover {
+            background-color: #d60047;
+            transform: translateY(-2px);
+        }
+        .submit-button:active {
+            transform: translateY(0);
+        }
+        #response-message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: none; /* Oculto por padrão */
+            word-wrap: break-word; /* Quebra de linha para URLs longas */
+            text-align: center;
+             transition: opacity 0.3s ease;
+        }
+        #response-message.success {
+            background-color: rgba(0, 255, 85, 0.15);
+            color: #00e64d;
+            border: 1px solid rgba(0, 255, 85, 0.3);
+             opacity: 1;
+        }
+        #response-message.error {
+            background-color: rgba(255, 0, 85, 0.15);
+            color: #ff0055;
+            border: 1px solid rgba(255, 0, 85, 0.3);
+             opacity: 1;
+        }
+         #response-message a {
+            color: #ff80ab; /* Link com cor destacada */
+            text-decoration: none;
+            font-weight: bold;
+         }
+         #response-message a:hover {
+             text-decoration: underline;
+         }
+
+         @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+         }
+    </style>
+</head>
+<body class="panel-body">
+
+    <div class="panel-container">
+        <h1>Mixeiro</h1>
+        <p class="welcome-message">Bem-vindo, Mixeiro!</p>
+
+        <form id="affiliate-form">
+            <div class="input-group">
+                <label for="mainAffiliateLink">Seu Link Principal de Afiliado:</label>
+                <input type="url" id="mainAffiliateLink" name="mainAffiliateLink" placeholder="https://seu.link.principal/aqui" required>
+                 <small style="color: #aaa; font-size: 0.8rem; display: block; margin-top: 5px;">Este link será usado nos CTAs principais.</small>
+            </div>
+
+            <div class="input-group">
+                <label for="button1Link">Link para Botão CTA 1:</label>
+                <input type="url" id="button1Link" name="button1Link" placeholder="https://link.para/botao1" required>
+            </div>
+
+            <div class="input-group">
+                <label for="button2Link">Link para Botão CTA 2:</label>
+                <input type="url" id="button2Link" name="button2Link" placeholder="https://link.para/botao2" required>
+            </div>
+
+            <div class="input-group">
+                <label for="button3Link">Link para Botão CTA 3:</label>
+                <input type="url" id="button3Link" name="button3Link" placeholder="https://link.para/botao3" required>
+            </div>
+
+            <button type="submit" class="submit-button">Gerar Minha Página</button>
+        </form>
+
+        <div id="response-message"></div>
+    </div>
+
+    <script src="/js/panel_script.js"></script>
+</body>
+</html>
