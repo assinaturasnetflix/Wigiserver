@@ -1,18 +1,15 @@
-require('dotenv').config(); // Carrega variáveis do .env
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path'); // <<< CORRIGIDO AQUI
+const path = require('path');
 const shortid = require('shortid');
 
-const app = express();
-// ... resto do seu código server.js
-
-const app = express();
-const PORT = process.env.PORT || 3000; // Porta para o servidor
+const app = express(); // ÚNICA E CORRETA DECLARAÇÃO DE 'APP'
+const PORT = process.env.PORT || 3000;
 
 // --- Configuração do Banco de Dados (MongoDB Atlas) ---
 const MONGODB_URI = process.env.MONGODB_URI;
-
+// ... resto do seu código ...
 if (!MONGODB_URI) {
     console.error("Erro: Variável de ambiente MONGODB_URI não definida!");
     process.exit(1); // Sai se não houver string de conexão
