@@ -1,8 +1,11 @@
 require('dotenv').config(); // Carrega variáveis do .env
 const express = require('express');
 const mongoose = require('mongoose');
-const path = path = require('path');
+const path = require('path'); // <<< CORRIGIDO AQUI
 const shortid = require('shortid');
+
+const app = express();
+// ... resto do seu código server.js
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Porta para o servidor
